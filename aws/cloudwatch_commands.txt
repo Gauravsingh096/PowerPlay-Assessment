@@ -1,0 +1,22 @@
+aws logs create-log-group --log-group-name /devops/intern-metrics
+
+aws logs create-log-stream \
+  --log-group-name /devops/intern-metrics \
+  --log-stream-name system-report-stream
+
+REPORT=$(tail -n 100 /var/log/system_report.log | jq -Rs .)
+TIMESTAMP=$(($(date +%s)*1000))
+
+cat <<EOF > /tmp/log_events.json
+[
+  {
+    "timestamp": $TIMESTAMP,
+    "message": $REPORT
+  }
+]
+EOF
+
+aws logs put-log-events \
+  --log-group-name /devops/intern-metrics \
+  --log-stream-name system-report-stream \
+  --log-events file:///tmp/log_events.json
